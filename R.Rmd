@@ -1,0 +1,844 @@
+---
+title: "Appendix"
+author: "Kanav Malik"
+date: "27 November,2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 6
+    theme: cerulean
+    fig_caption: true
+    number_sections: false
+    highlight: tango
+---
+
+---
+<style type="text/css">
+.main-container {
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
+```
+
+**Libraries used**
+```{r,echo=TRUE,warning=FALSE}
+library(MASS)
+library(knitr)
+library(dplyr)
+library(kableExtra)
+```
+
+# Appendix 1
+
+Data size and actual coefficients
+```{r,echo=TRUE}
+rows <- 1000000 # number of data observations required
+boot_samples <- 500 # number of times bootstrapping should be done
+b0 <- 4 #slope
+# coefficient
+b1 <- 2 
+b2 <- 10
+b3 <- 3
+b4 <- 7
+b5 <- 0.1
+b6 <- 1
+```
+
+## Dataset 1
+
+**Dataset** having no residuals and the response variable is linearly related to predictors i.e. conforms to all the assumptions of a linear regression model
+```{r,echo=TRUE,warning = FALSE}
+
+# Create the data
+set.seed(27049)
+data_1 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=0.3),error= 0)
+
+data_1$y <- b0 + b1 * data_1$x1 + b2 * data_1$x2 + b3 * data_1$x3 + b4 * data_1$x4 +
+            b5 * data_1$x5 + b6 * data_1$x6
+
+# Create plots to check assumptions................................................
+# Check multicollinearity through correlation plot
+corrplot::corrplot(cor(data_1),type="upper")
+
+```
+
+## Dataset 2
+
+**Dataset** having residuals(N(0,5) so the effect should cancel out overall) and the response variable is linearly related to predictors i.e. conforms to all the assumptions of a linear regression model
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_2 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=0.3),
+                     error=rnorm(rows,mean = 0,sd=10))
+
+data_2$y <-
+  b0 + b1 * data_2$x1 + b2 * data_2$x2 + b3 * data_2$x3 + b4 * data_2$x4 +
+  b5 * data_2$x5 + b6 * data_2$x6 + data_2$error
+
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) # split screen in two half
+plot(data_2$error, type="l",
+     main = "Plot for all indexes")
+plot(5000:5500, data_1$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+# Create plots to check assumptions............................................
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) # one screen
+acf(data_2$error) # autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_2$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_2),type="upper")
+
+```
+
+## Dataset 3
+
+**Dataset** violates the assumption of linear relationship between independant variables and depandant variable.
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_3 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=1),
+                     error=rnorm(rows,mean = 0,sd=10))
+
+data_3$y <-
+  b0 * data_3$x1^b1 * data_3$x2^b2 * data_3$x3^b3 * data_3$x4^b4 * data_3$x5 *
+  data_3$x6^b6  + data_3$error
+
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) # split screen in two half
+plot(data_3$error, type="l",
+     main = "Plot for all indexes") 
+plot(5000:5500, data_3$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) # one screen
+acf(data_3$error) # autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_3$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_3),type="upper")
+```
+
+## Dataset 4
+
+**Dataset** having residuals which are not independant and the response variable is linearly related to predictors i.e. violates the assumption of error being independant for linear regression model
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_4 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=0.3))
+
+## Get errors which are not independant and depends on the previous error.
+## MCMC Metropolis-Hastings with gamma proposal
+
+## Create a function for raleigh distribution which is our target distribution
+fr <- function(x, y) 
+  {
+    a <- 431 * (log(y) - log(x))
+    b <- 437 * (log(1+x) - log(1+y))
+    return(exp(a + b))
+}
+
+error <- numeric(rows)
+error[1] <- rchisq(1, df=1) # intializing error_1 using chisquare with 1 df
+k <- 0 # initializing counter for recording proposals rejected
+y <- 0
+xt <- 0
+u <- runif(rows) # left hand side of choosing criteria
+
+for (i in 2:rows) 
+  {
+    xt  <- error[i-1]
+    y   <- rgamma(1, shape=xt, rate=1)
+    r   <- fr(xt, y) * dchisq(xt, df=y) / dchisq(y, df=xt)
+    
+     
+     if (u[i] <= r) # condition is satisfied 
+       error[i] <- y # y accepted and added to chosen target distribution
+     else {
+       error[i] <- xt
+       k    <- k+1 # y is rejected
+     }
+   }
+
+print(k) # number of rejections
+paste("Proposals rejected =",(k/rows)*100,"%") # Rejection percentage
+
+data_4 <- cbind(data_4,error)
+
+data_4$y <-
+  b0 + b1 * data_4$x1 + b2 * data_4$x2 + b3 * data_4$x3 + b4 * data_4$x4 + 
+  b5 * data_4$x5 + b6 * data_4$x6 + data_4$error
+
+# Create plots to check assumptions.............................................
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) # split screen in two half
+plot(error, type="l",
+     main = "Plot for all indexes") # plot the target distribution for error
+plot(5000:5500, error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) # one screen
+acf(error) # autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_4),type="upper")
+
+```
+
+## Dataset 5
+
+**Dataset** having heteroscedastic residuals i.e. violates the assumption of homoscedasticity.
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_5 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=0.3))
+
+data_5$y <-
+  b0 + b1 * data_5$x1 + b2 * data_5$x2 + b3 * data_5$x3 + b4 * data_5$x4 +
+  b5 * data_5$x5 + b6 * data_5$x6
+
+data_5$error <- ifelse(data_5$y<quantile(data_5$y,0.25),rnorm(1,0,5),
+                       ifelse(data_5$y<quantile(data_5$y,0.5),rnorm(1,0,10),
+                       ifelse(data_5$y<quantile(data_5$y,0.75),rnorm(1,0,15),
+                              rnorm(1,0,20))))
+
+data_5$y <-
+  b0 + b1 * data_5$x1 + b2 * data_5$x2 + b3 * data_5$x3 + b4 * data_5$x4 +
+  b5 * data_5$x5 + b6 * data_5$x6 + data_5$error
+
+# Create plots to check assumptions..........................................
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) # split screen in two half
+plot(data_5$error, type="l",
+     main = "Plot for all indexes")
+plot(5000:5500, data_5$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) # one screen
+acf(data_5$error) # autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_5$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_5),type="upper")
+
+```
+
+## Dataset 6
+
+**Dataset** having x4,x5,x6 highly correlated within themselves and with the error i.e. violates the assumption of no multicollinearity
+
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_6 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rpois(rows,0.3))
+
+mu          <- c(50,60,70,30)  # Column means
+Sigma       <- matrix(c(1,0.98,0.98,0.98,0.98,1,0.98,0.98,0.98,0.98,
+                        1,0.98,0.98,0.98,0.98,1),
+                      nrow = 4,ncol = 4,byrow = T) # Covariance matrix
+
+## using mvrnorm from library(MASS) to generate multivariate normal numbers
+mat <- data.frame(mvrnorm(rows, mu, Sigma))
+colnames(mat) <- c("x4","x5","x6","error")
+data_6 <- cbind(data_6,mat)
+
+data_6$y <-
+  b0 + b1 * data_6$x1 + b2 * data_6$x2 + b3 * data_6$x3 + b4 * data_6$x4 +
+  b5 * data_6$x5 + b6 * data_6$x6 + data_6$error
+
+# Create plots to check assumptions...........................................
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) ## split screen in two half
+plot(data_6$error, type="l",
+     main = "Plot for all indexes") 
+plot(5000:5500, data_6$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) ## one screen
+acf(data_6$error) ## autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_6$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_6),type="upper")
+
+```
+
+## Dataset 7
+
+**Dataset** violates the assumption of normality of residuals
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049)
+data_7 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rexp(rows,rate=1/0.3),x4=rweibull(rows,shape = 2,scale = 1),
+                     x5=rnorm(rows,mean=5,sd=2),x6=rpois(rows,lambda=0.3),
+                     error=runif(rows,min=-10,max=10))
+
+data_7$y <-
+  b0 + b1 * data_7$x1^2 + b2 * data_7$x2^2 + b3 * data_7$x3^2 + b4 * data_7$x4^2 +
+  b5 * data_7$x5 + b6 * data_7$x6 + data_7$error
+
+# Create plots to check assumptions...............................................
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) ## split screen in two half
+plot(data_7$error, type="l",
+     main = "Plot for all indexes") 
+plot(5000:5500, data_7$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) ## one screen
+acf(data_7$error) ## autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_7$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_7),type="upper")
+
+```
+
+## Dataset 8
+
+**Dataset** having residuals(which are not distributed standard normal),the residuals are heteroscedastic,residuals are correlated to x4,x5,x6;x4,x5,x6 are correlated within themselves and the response variable is non-linearly related to predictors i.e. Multiple violations have been violated
+
+```{r,echo=TRUE}
+
+# Create the data
+set.seed(27049 )
+data_8 <- data.frame(x1=rnorm(rows,mean = 1,sd=0.5),x2=rbinom(rows,100,0.6),
+                     x3=rpois(rows,0.3))
+
+mu          <- c(50,60,70) ##Column means
+## Covariance matrix
+Sigma       <- matrix(c(1,0.8,0.8,0.8,1,0.8,0.8,0.8,1),nrow = 3,ncol = 3,byrow = T)   
+
+## using mvrnorm from library(MASS) to generate multivariate normal numbers
+mat <- data.frame(mvrnorm(rows, mu, Sigma))
+colnames(mat) <- c("x4","x5","x6")
+data_8 <- cbind(data_8,mat)
+
+data_8$y <-
+  b0 * data_8$x1^b1 * data_8$x2^b2 * data_8$x3^b3 * data_8$x4^b4 * data_8$x5^b5 *
+  data_8$x6^b6
+
+data_8$error <- ifelse(data_8$y<quantile(data_8$y,0.25),rnorm(1,5,5),
+                ifelse(data_8$y<quantile(data_8$y,0.5),rnorm(1,10,10),
+                ifelse(data_8$y<quantile(data_8$y,0.75),rnorm(1,15,15),
+                       rnorm(1,20,20))))
+
+data_8$y <-
+  b0 * data_8$x1^b1 * data_8$x2^b2 * data_8$x3^b3 * data_8$x4^b4 * data_8$x5^b5 *
+  data_8$x6^b6 + data_8$error
+
+# Create plots to check assumptions...........................................
+## Check through scatterplot whether errors are random
+par(mfrow=c(1,2)) ##split screen in two half
+plot(data_8$error, type="l",
+     main = "Plot for all indexes") 
+plot(5000:5500, data_8$error[5000:5500], type="l", ylab="x",xlab = "Index",
+     main=paste("Plot for index=",5000,":",5500))
+
+## Check through autocorrelation whether errors are independantly distributed
+par(mfrow=c(1,1)) ##one screen
+acf(data_8$error) ##autocorrelation plot
+
+## Check normality of error by doing visual inspection through histogram
+hist(data_8$error, breaks="scott", main="", xlab="", freq=FALSE)
+
+## Check multicollinearity in data through correlation plot
+corrplot::corrplot(cor(data_8),type="upper")
+
+```
+
+# Appendix 2
+
+**Train/Test splits for each dataset**
+```{r,echo=TRUE}
+
+# Sample indexes of train set
+train_index <-sample(rows,size = rows*0.80,replace = FALSE)
+
+# Train datasets
+TrainData_1 <- data_1[train_index,]
+TrainData_2 <- data_2[train_index,]
+TrainData_3 <- data_3[train_index,]
+TrainData_4 <- data_4[train_index,]
+TrainData_5 <- data_5[train_index,]
+TrainData_6 <- data_6[train_index,]
+TrainData_7 <- data_7[train_index,]
+TrainData_8 <- data_8[train_index,]
+
+#Train datasets
+TestData_1 <- data_1[-train_index,]
+TestData_2 <- data_2[-train_index,]
+TestData_3 <- data_3[-train_index,]
+TestData_4 <- data_4[-train_index,]
+TestData_5 <- data_5[-train_index,]
+TestData_6 <- data_6[-train_index,]
+TestData_7 <- data_7[-train_index,]
+TestData_8 <- data_8[-train_index,]
+
+```
+
+# Appendix 3
+
+## Linear Model
+
+**Fitting linear model to get coefficient estimates and their 95% CI,residual-fitted plot of train datasets**
+```{r,echo=TRUE,warning=FALSE}
+
+# Fit linear model on each dataset
+TrainLM_Data1 <- lm(y~.-error,TrainData_1)
+TrainLM_Data2 <- lm(y~.-error,TrainData_2)
+TrainLM_Data3 <- lm(y~.-error,TrainData_3)
+TrainLM_Data4 <- lm(y~.-error,TrainData_4)
+TrainLM_Data5 <- lm(y~.-error,TrainData_5)
+TrainLM_Data6 <- lm(y~.-error,TrainData_6)
+TrainLM_Data7 <- lm(y~.-error,TrainData_7)
+TrainLM_Data8 <- lm(y~.-error,TrainData_8)
+
+#....................................................................
+## Residuals vs fitted plot to checkassumption of residuals homoscedasticity
+## Normal Q-Q plot to check assumptions of residuals randomness,homoscedasticity
+plot(fitted(TrainLM_Data1),resid(TrainLM_Data1),
+     main = "Residuals vs Fitted(Data 1)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data1),
+       main="Normal Q-Q plot(Data 1)")
+qqline(resid(TrainLM_Data1))
+
+plot(fitted(TrainLM_Data2),resid(TrainLM_Data2),
+     main = "Residuals vs Fitted(Data 2)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data2),
+       main = "Normal Q-Q plot(Data 2)")
+qqline(resid(TrainLM_Data2))
+
+plot(fitted(TrainLM_Data3),resid(TrainLM_Data3),
+     main = "Residuals vs Fitted(Data 3)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data3),
+       main="Normal Q-Q plot(Data 3)")
+qqline(resid(TrainLM_Data3))
+
+plot(fitted(TrainLM_Data4),resid(TrainLM_Data4),
+     main = "Residuals vs Fitted(Data 4)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data4),
+       main="Normal Q-Q plot(Data 4)")
+qqline(resid(TrainLM_Data4))
+
+plot(fitted(TrainLM_Data5),resid(TrainLM_Data5),
+     main = "Residuals vs Fitted(Data 5)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data5),
+       main="Normal Q-Q plot(Data 5)")
+qqline(resid(TrainLM_Data5))
+
+plot(fitted(TrainLM_Data6),resid(TrainLM_Data6),
+     main = "Residuals vs Fitted(Data 6)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data6),
+       main="Normal Q-Q plot(Data 6)")
+qqline(resid(TrainLM_Data6))
+
+plot(fitted(TrainLM_Data7),resid(TrainLM_Data7),
+     main = "Residuals vs Fitted(Data 7)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data7),
+       main="Normal Q-Q plot(Data 7)")
+qqline(resid(TrainLM_Data1))
+
+plot(fitted(TrainLM_Data8),resid(TrainLM_Data8),
+     main = "Residuals vs Fitted(Data 8)")
+abline(0,0)
+qqnorm(resid(TrainLM_Data8),
+       main="Normal Q-Q plot(Data 8)")
+qqline(resid(TrainLM_Data8))
+
+```
+
+## Bootstrapped Linear Model
+
+**Function for computing bootstraped linear model coefficient estimates and their 95% CI, Test/Train R-squared,MSE**
+```{r,echo=TRUE}
+
+boot_coef_estimates <- function(data,times,testdata){
+  coeff <- data.frame(matrix(,nrow = ncol(data)-1,ncol=times))
+  coeff_CI_lower <- data.frame(matrix(,nrow = ncol(data)-1,ncol=times))
+  coeff_CI_upper <- data.frame(matrix(,nrow = ncol(data)-1,ncol=times))
+  y_predicted_train    <- matrix(,nrow=nrow(data),ncol = 1)
+  y_predicted_test    <- matrix(,nrow=nrow(testdata),ncol = 1)
+  Train_r.squared <- 0
+  Test_r.squared <- 0
+  Train_MSE <- 0
+  Test_MSE <- 0
+    
+  for (i in 1:times) {
+  set.seed(i)
+  sample <- sample(nrow(data),nrow(data)*0.80)
+  model  <- lm(y~.-error,data[sample,])
+  coeff[,i] <- data.frame(model$coefficients)
+  coeff_CI_lower[,i] <- data.frame(confint(model,level = 0.95)[,1])
+  coeff_CI_upper[,i] <- data.frame(confint(model,level = 0.95)[,2])
+  }
+  
+Bootstrap_coefficients <- data.frame(boot_coefficients=rowMeans(coeff))
+Bootstrap_coefficients_CI <- cbind(boot_lowerCI_coeff=rowMeans(coeff_CI_lower),
+                                   boot_upperCI_coeff=rowMeans(coeff_CI_upper))
+
+y_predicted_train[,1] <- Bootstrap_coefficients[1,1]+
+  Bootstrap_coefficients[2,1]*data$x1+Bootstrap_coefficients[3,1]*data$x2+
+  Bootstrap_coefficients[4,1]*data$x3+Bootstrap_coefficients[5,1]*data$x4+
+  Bootstrap_coefficients[6,1]*data$x5+Bootstrap_coefficients[7,1]*data$x6
+
+y_predicted_test[,1] <- Bootstrap_coefficients[1,1]+
+  Bootstrap_coefficients[2,1]*testdata$x1+Bootstrap_coefficients[3,1]*testdata$x2+
+  Bootstrap_coefficients[4,1]*testdata$x3+Bootstrap_coefficients[5,1]*testdata$x4+
+  Bootstrap_coefficients[6,1]*testdata$x5+Bootstrap_coefficients[7,1]*testdata$x6
+
+Train_r.squared <- 
+  sum((y_predicted_train-mean(data$y))^2)/sum((data$y-mean(data$y))^2)
+
+Test_r.squared <- 
+  sum((y_predicted_test-mean(data$y))^2)/sum((testdata$y-mean(data$y))^2)
+
+Train_MSE <- round(mean((y_predicted_train-testdata$y)^2),2)
+
+Test_MSE <- round(mean((y_predicted_test-testdata$y)^2),2)
+
+return(list(Bootstrap_coefficients = Bootstrap_coefficients,
+            Bootstrap_coefficients_CI = Bootstrap_coefficients_CI,
+            coeff_CI_lower = coeff_CI_lower,
+            coeff_CI_upper = coeff_CI_upper,
+            coeff = coeff,
+            Train_R_squared = Train_r.squared,
+            Test_R_squared = Test_r.squared,
+            Train_MSE = Train_MSE,
+            Test_MSE = Test_MSE))
+}
+
+```
+
+# Appendix 4
+
+## Linear Model Results
+
+**Coefficient estimates and their 95% CI,Train/Test R-squared,MSE for each model on each train data**
+```{r,echo=TRUE}
+
+# Gather results
+# Computing Coeficient estimates and 95% CI
+
+## Coefficient estimates of each linear model
+LM_coefficient_estimates <- 
+  data.frame(Coefficient=c("b0","b1","b2","b3","b4","b5","b6"),
+             Actual=c(b0,b1,b2,b3,b4,b5,b6),
+             Data1=round(TrainLM_Data1$coefficients,1),
+             Data2=round(TrainLM_Data2$coefficients,1),
+             Data3=round(TrainLM_Data3$coefficients,1),
+             Data4=round(TrainLM_Data4$coefficients,1),
+             Data5=round(TrainLM_Data5$coefficients,1),
+             Data6=round(TrainLM_Data6$coefficients,1),
+             Data7=round(TrainLM_Data7$coefficients,1),
+             Data8=round(TrainLM_Data8$coefficients,1))
+
+## 95% CI of coefficient estimates of each linear model
+LM_coefficient_estimates_CI <- 
+  data.frame(Coefficient=c("b0","b1","b2","b3","b4","b5","b6"),
+             Actual=c(b0,b1,b2,b3,b4,b5,b6),
+             Data1_CI= paste("(",round(confint(TrainLM_Data1)[,1],1),",",
+                                    round(confint(TrainLM_Data1)[,2],1),")"),
+             Data2_CI= paste("(",round(confint(TrainLM_Data2)[,1],1),",",
+                                    round(confint(TrainLM_Data2)[,2],1),")"),
+             Data3_CI= paste("(",round(confint(TrainLM_Data3)[,1],1),",",
+                                    round(confint(TrainLM_Data3)[,2],1),")"),
+             Data4_CI= paste("(",round(confint(TrainLM_Data4)[,1],1),",",
+                                    round(confint(TrainLM_Data4)[,2],1),")"),
+             Data5_CI= paste("(",round(confint(TrainLM_Data5)[,1],1),",",
+                                    round(confint(TrainLM_Data5)[,2],1),")"),
+             Data6_CI= paste("(",round(confint(TrainLM_Data6)[,1],1),",",
+                                    round(confint(TrainLM_Data6)[,2],1),")"),
+             Data7_CI= paste("(",round(confint(TrainLM_Data7)[,1],1),",",
+                                    round(confint(TrainLM_Data7)[,2],1),")"),
+             Data8_CI= paste("(",round(confint(TrainLM_Data8)[,1],1),",",
+                                    round(confint(TrainLM_Data8)[,2],1),")"))
+ 
+#.............................................
+# Computing Train/Test r-squared,MSE and creating a table containing these results
+
+Predictions_TrainData_1 <- predict(TrainLM_Data1,TrainData_1)
+Predictions_TrainData_2 <- predict(TrainLM_Data2,TrainData_2)
+Predictions_TrainData_3 <- predict(TrainLM_Data3,TrainData_3)
+Predictions_TrainData_4 <- predict(TrainLM_Data4,TrainData_4)
+Predictions_TrainData_5 <- predict(TrainLM_Data5,TrainData_5)
+Predictions_TrainData_6 <- predict(TrainLM_Data6,TrainData_6)
+Predictions_TrainData_7 <- predict(TrainLM_Data6,TrainData_7)
+Predictions_TrainData_8 <- predict(TrainLM_Data6,TrainData_8)
+
+Predictions_TestData_1 <- predict(TrainLM_Data1,TestData_1)
+Predictions_TestData_2 <- predict(TrainLM_Data2,TestData_2)
+Predictions_TestData_3 <- predict(TrainLM_Data3,TestData_3)
+Predictions_TestData_4 <- predict(TrainLM_Data4,TestData_4)
+Predictions_TestData_5 <- predict(TrainLM_Data5,TestData_5)
+Predictions_TestData_6 <- predict(TrainLM_Data6,TestData_6)
+Predictions_TestData_7 <- predict(TrainLM_Data6,TestData_7)
+Predictions_TestData_8 <- predict(TrainLM_Data6,TestData_8)
+
+## R-squared of Train datasets
+LM_R_squared_Train <- 
+  data.frame(LM_Train_R_squared=c(
+    paste(round(summary(TrainLM_Data1)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data2)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data3)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data4)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data5)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data6)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data7)$r.squared*100,2),"%"),
+    paste(round(summary(TrainLM_Data8)$r.squared*100,2),"%")))
+
+## R-squared of Test datasets
+LM_R_squared_Test <- data.frame(
+LM_Test_R_squared=c(
+paste(round((sum((Predictions_TestData_1-mean(TestData_1$y))^2)/
+            (sum((TestData_1$y-mean(TestData_1$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_2-mean(TestData_2$y))^2)/
+            (sum((TestData_2$y-mean(TestData_2$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_3-mean(TestData_3$y))^2)/
+            (sum((TestData_3$y-mean(TestData_3$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_4-mean(TestData_4$y))^2)/
+            (sum((TestData_4$y-mean(TestData_4$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_5-mean(TestData_5$y))^2)/
+            (sum((TestData_5$y-mean(TestData_5$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_6-mean(TestData_6$y))^2)/
+            (sum((TestData_6$y-mean(TestData_6$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_7-mean(TestData_7$y))^2)/
+            (sum((TestData_7$y-mean(TestData_7$y))^2)))*100,2),"%"),
+paste(round((sum((Predictions_TestData_8-mean(TestData_8$y))^2)/
+            (sum((TestData_8$y-mean(TestData_8$y))^2)))*100,2),"%")))
+
+## Combining results for train and test R-squared
+LM_R_squared <- cbind(LM_R_squared_Train,LM_R_squared_Test)
+
+## Combining results for train and test MSE
+LM_MSE <- data.frame(
+  LM_Train_MSE=c(
+    round(mean((Predictions_TrainData_1-TrainData_1$y)^2),3),
+    round(mean((Predictions_TrainData_2-TrainData_2$y)^2),3),
+    round(mean((Predictions_TrainData_3-TrainData_3$y)^2),3),
+    round(mean((Predictions_TrainData_4-TrainData_4$y)^2),3),
+    round(mean((Predictions_TrainData_5-TrainData_5$y)^2),3),
+    round(mean((Predictions_TrainData_6-TrainData_6$y)^2),3),
+    round(mean((Predictions_TrainData_7-TrainData_7$y)^2),3),
+    round(mean((Predictions_TrainData_8-TrainData_8$y)^2),3)),
+  LM_Test_MSE=c(
+    round(mean((Predictions_TestData_1-TestData_1$y)^2),3),
+    round(mean((Predictions_TestData_2-TestData_2$y)^2),3),
+    round(mean((Predictions_TestData_3-TestData_3$y)^2),3),                                             
+    round(mean((Predictions_TestData_4-TestData_4$y)^2),3),
+    round(mean((Predictions_TestData_5-TestData_5$y)^2),3),
+    round(mean((Predictions_TestData_6-TestData_6$y)^2),3),
+    round(mean((Predictions_TestData_7-TestData_7$y)^2),3),
+    round(mean((Predictions_TestData_8-TestData_8$y)^2),3)))
+
+#............................................................................
+# Create seperate tables displaying coefficient estimates, 
+# their 95% CI and Test/Train r-squared,MSE
+
+Table_1 <- kable(LM_coefficient_estimates,
+                 caption = "Table 1: Linear Model coefficients") %>%
+kable_styling()
+
+Table_2 <- kable(LM_coefficient_estimates_CI,
+                 caption = "Table 2: Linear Model coefficients 95% CI") %>%
+kable_styling()
+
+Table_3 <- kable(cbind(Dataset=c(1,2,3,4,5,6,7,8),LM_R_squared,LM_MSE),
+                 caption =
+          "Table 3: Train/Test R-squared, Train/Test MSE of each regression model
+           fitted on each Training set")%>%
+kable_styling()
+
+```
+
+## Bootstrapped results
+
+**Boostrapped coefficient estimates and 95% CI,Test/Train R-squared,MSE of model fitted on each train dataset**
+```{r,echo=TRUE,warning=FALSE}
+
+# Call function to get bootstrapping results for each Test dataset
+boot_data1 <- boot_coef_estimates(TrainData_1,boot_samples,TestData_1)
+boot_data2 <- boot_coef_estimates(TrainData_2,boot_samples,TestData_2)
+boot_data3 <- boot_coef_estimates(TrainData_3,boot_samples,TestData_3)
+boot_data4 <- boot_coef_estimates(TrainData_4,boot_samples,TestData_4)
+boot_data5 <- boot_coef_estimates(TrainData_5,boot_samples,TestData_5)
+boot_data6 <- boot_coef_estimates(TrainData_6,boot_samples,TestData_6)
+boot_data7 <- boot_coef_estimates(TrainData_7,boot_samples,TestData_7)
+boot_data8 <- boot_coef_estimates(TrainData_8,boot_samples,TestData_8)
+
+#............................................................................
+# Gather results
+
+## Bootstrapped coefficient estimates of each model
+Boot_coefficient_estimates <- 
+  data.frame(Coefficient=c("b0","b1","b2","b3","b4","b5","b6"),
+             Actual=c(b0,b1,b2,b3,b4,b5,b6),
+             Data1=round(boot_data1$Bootstrap_coefficients[,1],1),
+             Data2=round(boot_data2$Bootstrap_coefficients[,1],1),
+             Data3=round(boot_data3$Bootstrap_coefficients[,1],1),
+             Data4=round(boot_data4$Bootstrap_coefficients[,1],1),
+             Data5=round(boot_data5$Bootstrap_coefficients[,1],1),
+             Data6=round(boot_data6$Bootstrap_coefficients[,1],1),
+             Data7=round(boot_data7$Bootstrap_coefficients[,1],1),
+             Data8=paste(round(boot_data8$Bootstrap_coefficients[,1],1)))
+
+## Bootstrapped 95% CI of coefficient estimates of each model
+Boot_coefficient_estimates_CI <- data.frame(
+  Coefficient=c("b0","b1","b2","b3","b4","b5","b6"),
+  Actual=c(b0,b1,b2,b3,b4,b5,b6),
+  Data1_CI=paste("(",round(boot_data1$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data1$Bootstrap_coefficients_CI[,2],1),")"),
+  Data2_CI=paste("(",round(boot_data2$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data2$Bootstrap_coefficients_CI[,2],1),")"),
+  Data3_CI=paste("(",round(boot_data3$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data3$Bootstrap_coefficients_CI[,2],1),")"),
+  Data4_CI=paste("(",round(boot_data4$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data4$Bootstrap_coefficients_CI[,2],1),")"),
+  Data5_CI=paste("(",round(boot_data5$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data5$Bootstrap_coefficients_CI[,2],1),")"),
+  Data6_CI=paste("(",round(boot_data6$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data6$Bootstrap_coefficients_CI[,2],1),")"),
+  Data7_CI=paste("(",round(boot_data7$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data7$Bootstrap_coefficients_CI[,2],1),")"),
+  Data8_CI=paste("(",round(boot_data8$Bootstrap_coefficients_CI[,1],1),",",
+                     round(boot_data8$Bootstrap_coefficients_CI[,2],1),")"))
+
+## R-squared (linear model for each Train set has bootstrapped estimates)
+Boot_R_squared <- 
+  data.frame(
+    Boot_Train_R_squared =c(
+      paste(round(boot_data1$Train_R_squared*100,2),"%"),
+      paste(round(boot_data2$Train_R_squared*100,2),"%"),
+      paste(round(boot_data3$Train_R_squared*100,2),"%"),
+      paste(round(boot_data4$Train_R_squared*100,2),"%"),
+      paste(round(boot_data5$Train_R_squared*100,2),"%"),
+      paste(round(boot_data6$Train_R_squared*100,2),"%"),
+      paste(round(boot_data7$Train_R_squared*100,2),"%"),
+      paste(round(boot_data8$Train_R_squared*100,2),"%")),
+Boot_Test_R_squared =c(
+      paste(round(boot_data1$Test_R_squared*100,2),"%"),
+      paste(round(boot_data2$Test_R_squared*100,2),"%"),
+      paste(round(boot_data3$Test_R_squared*100,2),"%"),
+      paste(round(boot_data4$Test_R_squared*100,2),"%"),
+      paste(round(boot_data5$Test_R_squared*100,2),"%"),
+      paste(round(boot_data6$Test_R_squared*100,2),"%"),
+      paste(round(boot_data7$Test_R_squared*100,2),"%"),
+      paste(round(boot_data8$Test_R_squared*100,2),"%")))
+
+## MSE(linear model for each Train set has bootstrapped estimates)
+Boot_MSE <- 
+  data.frame(
+    Boot_Train_MSE=c(round(boot_data1$Train_MSE,2),
+                     round(boot_data2$Train_MSE,2),
+                     round(boot_data3$Train_MSE,2),
+                     round(boot_data4$Train_MSE,2),
+                     round(boot_data5$Train_MSE,2),
+                     round(boot_data6$Train_MSE,2),
+                     round(boot_data7$Train_MSE,2),
+                     round(boot_data8$Train_MSE,2)),
+     Boot_Test_MSE=c(round(boot_data1$Test_MSE,2),
+                     round(boot_data2$Test_MSE,2),
+                     round(boot_data3$Test_MSE,2),
+                     round(boot_data4$Test_MSE,2),
+                     round(boot_data5$Test_MSE,2),
+                     round(boot_data6$Test_MSE,2),
+                     round(boot_data7$Test_MSE,2),
+                     round(boot_data8$Test_MSE,2)))
+
+#..........................................................................
+# Create seperate tables displaying coefficient estimates, 
+# their 95% CI and Test/Train r-squared,MSE
+
+Table_4 <- kable(
+  cbind(coefficients=c("(intercept)","x1","x2","x3","x4","x5","x6"),
+        Boot_coefficient_estimates),
+        caption = "Table 4: Boostrap coefficient Estimates")%>%
+kable_styling()
+
+Table_5 <- kable(
+  cbind(coefficients=c("(intercept)","x1","x2","x3","x4","x5","x6"),
+        Boot_coefficient_estimates_CI),
+        caption = "Table 5: Boostrap coeffficient Estimates 95% CI")%>%
+kable_styling()
+
+Table_6 <- kable(cbind(Data=c(1:8),Boot_R_squared,Boot_MSE),
+                 caption = "Table 6: Train/Test R squared and Train/Test
+                 MSE of each regression model with bootstrapped coefficients
+                 fitted on each Training set")%>%
+kable_styling()
+
+```
+
+## Displaying Results
+
+**Linear Model & Bootstraped Linear Model results** 
+```{r,echo=TRUE}
+
+Table_1
+Table_4
+Table_2
+Table_5
+Table_3
+Table_6
+
+```
+
+
+```{r, Turning warnings on again,echo=FALSE}
+options(warn=0)
+```
+
+
